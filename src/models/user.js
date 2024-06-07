@@ -4,14 +4,13 @@ const userSchema = mongoose.Schema({
     serialNo: {
         type: Number
     },
+    avatar: {
+        type: String,
+        default: 'profile-image.png'
+    },
     email: {
         type: String,
         required: true,
-    },
-    userName: {
-        type: String,
-        required: true,
-        unique: [true, 'Already have an account on this username']
     },
     passwordHash: {
         type: String,
@@ -35,9 +34,13 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        default: 'rep'
+        default: '2003' // 2003 is for simple user and 8989 from admin
     },
-    area: {
+    designation: {
+        type: String,
+        default: ''
+    },
+    qualification: {
         type: String,
         default: ''
     },

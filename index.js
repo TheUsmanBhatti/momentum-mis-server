@@ -4,7 +4,7 @@ const cors = require('cors');
 const authJwt = require('./src/helpers/jwt');
 const errorHandler = require('./src/helpers/error-handler');
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 const app = express();
 
 app.use(cors());

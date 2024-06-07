@@ -3,12 +3,13 @@ const { User } = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const jwt_decode = require('jwt-decode');
+const multer = require('multer');
 
 // --------------------------- Get All Users
 
 const getAllUsers = async (req, res) => {
     try {
-        const result = await User.find({ isDeleted: false, role: 'rep' });
+        const result = await User.find({ isDeleted: false, role: '2003' }).select('-passwordHash');
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -45,15 +46,16 @@ const createUser = async (req, res) => {
         const checkEmail = await User.findOne({ email, isDeleted: false });
         if (checkEmail) return res.status(400).json({ success: false, message: 'Already have an account on this email' });
 
-        const userCount = await User.countDocuments();
+        const fileName = req?.file?.filename;
+        const lastUser = await User.findOne().sort({ _id: -1 }).exec();
 
         const insertUser = new User({
+            ...req?.body,
             email: email,
-            userName: `${email?.split('@')[0]}s${userCount + 1}`,
-            passwordHash: bcrypt.hashSync(password, 10),
+            avatar: fileName || null,
+            passwordHash: bcrypt.hashSync(password, 11),
             createdBy: req?.auth?.userId,
-            serialNo: userCount + 1,
-            ...req?.body
+            serialNo: lastUser?.serialNo + 1 || 0
         });
 
         const result = await insertUser.save();
@@ -76,16 +78,14 @@ const signUpUser = async (req, res) => {
         const checkEmail = await User.findOne({ email, isDeleted: false });
         if (checkEmail) return res.status(400).json({ success: false, message: 'Already have an account on this email' });
 
-        const userCount = await User.countDocuments();
+        const lastUser = await User.findOne().sort({ _id: -1 }).exec();
 
         const insertUser = new User({
-            email: email,
-            userName: `sign-up-${Date.now()}`,
-            passwordHash: bcrypt.hashSync(password, 10),
-            serialNo: userCount + 1,
             ...req?.body,
-            role: 'rep',
-            area: 'signup'
+            email: email,
+            passwordHash: bcrypt.hashSync(password, 10),
+            serialNo: lastUser?.serialNo + 1 || 0,
+            role: '8989'
         });
 
         const result = await insertUser.save();
@@ -120,7 +120,7 @@ const signinUser = async (req, res) => {
                     role: user?.role
                 },
                 secret,
-                { expiresIn: '7d' }
+                { expiresIn: '1d' }
             );
             res.status(200).send({ token: token });
         } else {
@@ -135,9 +135,11 @@ const signinUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, area, phoneNo, address } = req?.body;
+        const { firstName, lastName, email, qualification, designation, phoneNo, address } = req?.body;
         const user = await User.findById(req.params.id);
         if (!user) return res.status(400).send('Invalid User!');
+
+        const fileName = req?.file?.filename;
 
         const result = await User.findByIdAndUpdate(
             req.params.id,
@@ -145,9 +147,11 @@ const updateUser = async (req, res) => {
                 firstName,
                 lastName,
                 email,
-                area,
+                qualification,
+                designation,
                 phoneNo,
                 address,
+                ...(fileName && { avatar: fileName }),
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },
@@ -169,8 +173,6 @@ const updatePassword = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(400).send('Invalid User!');
-
-        // const result = undefined;
 
         if (user && bcrypt.compareSync(req.body.oldPassword, user.passwordHash)) {
             var result = await User.findByIdAndUpdate(
