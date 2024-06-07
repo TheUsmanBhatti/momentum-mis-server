@@ -16,12 +16,6 @@ const api = process.env.API_URL;
 // =======================================  Importing Routers  =====================================
 
 const userRoutes = require('./src/routes/userRoutes');
-const orderRoutes = require('./src/routes/orderRoutes');
-const productRoutes = require('./src/routes/productRoutes');
-const customerRoutes = require('./src/routes/customerRoutes');
-const orderItemRoutes = require('./src/routes/orderItemRoutes');
-const paymentRoutes = require('./src/routes/paymentRoutes');
-const bankRoutes = require('./src/routes/bankRoutes');
 
 // =======================================  Middleware  ============================================
 
@@ -44,12 +38,6 @@ mongoose
 // =======================================  Routers  ===============================================
 
 app.use(`${api}/users`, userRoutes);
-app.use(`${api}/orders`, orderRoutes);
-app.use(`${api}/products`, productRoutes);
-app.use(`${api}/customers`, customerRoutes);
-app.use(`${api}/orderItems`, orderItemRoutes);
-app.use(`${api}/payments`, paymentRoutes);
-app.use(`${api}/banks`, bankRoutes);
 
 // =======================================  Creating Server  =======================================
 
