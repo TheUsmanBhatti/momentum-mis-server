@@ -25,7 +25,7 @@ const getAllUsers = async (req, res) => {
 
 const getUsersById = async (req, res) => {
     try {
-        const result = await User.findById(req.params.id);
+        const result = await User.findById(req.params.id).select('-passwordHash');
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'User Not Found' });
@@ -122,7 +122,7 @@ const signinUser = async (req, res) => {
                 secret,
                 { expiresIn: '1d' }
             );
-            res.status(200).send({ token: token });
+            res.status(200).send({ token: token, success: true });
         } else {
             res.status(400).send({ message: 'Wrong Password' });
         }
