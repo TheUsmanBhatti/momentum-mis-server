@@ -135,14 +135,14 @@ const signinUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, qualification, designation, phoneNo, address } = req?.body;
-        const user = await User.findById(req.params.id);
+        const { userId, firstName, lastName, email, qualification, designation, phoneNo, address } = req?.body;
+        const user = await User.findById(userId);
         if (!user) return res.status(400).send('Invalid User!');
 
         const fileName = req?.file?.filename;
 
         const result = await User.findByIdAndUpdate(
-            req.params.id,
+            userId,
             {
                 firstName,
                 lastName,

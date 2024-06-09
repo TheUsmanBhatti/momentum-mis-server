@@ -49,7 +49,7 @@ router.get('/:id', getUsersById);
 router.post('/', uploadOptions.single('avatar'), createUser);
 router.post('/sign-up', signUpUser);
 router.post('/signin', signinUser);
-router.put('/:id', uploadOptions.single('avatar'), updateUser);
+router.put('/', uploadOptions.single('avatar'), updateUser);
 router.put('/updatePassword/:id', updatePassword);
 router.put('/setPassword/:id', setNewPassword);
 router.delete('/:id', deleteUser);

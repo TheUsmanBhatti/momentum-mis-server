@@ -2,4 +2,4 @@
 npm-debug.log
 .DS_Store
 .env
-# /src/public/uploads/*
+/src/public/uploads/*
