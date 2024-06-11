@@ -16,6 +16,14 @@ const api = process.env.API_URL;
 // =======================================  Importing Routers  =====================================
 
 const userRoutes = require('./src/routes/userRoutes');
+const countryRoutes = require('./src/routes/countryRoutes');
+const provinceRoutes = require('./src/routes/provinceRoutes');
+const cityRoutes = require('./src/routes/cityRoutes');
+const districtRoutes = require('./src/routes/districtRoutes');
+const tehsilRoutes = require('./src/routes/tehsilRoutes');
+const unionCouncilRoutes = require('./src/routes/unionCouncilRoutes');
+const villageRoutes = require('./src/routes/villageRoutes');
+
 
 // =======================================  Middleware  ============================================
 
@@ -38,6 +46,13 @@ mongoose
 // =======================================  Routers  ===============================================
 
 app.use(`${api}/users`, userRoutes);
+app.use(`${api}/countries`, countryRoutes);
+app.use(`${api}/provinces`, provinceRoutes);
+app.use(`${api}/cities`, cityRoutes);
+app.use(`${api}/districts`, districtRoutes);
+app.use(`${api}/tehsils`, tehsilRoutes);
+app.use(`${api}/unionCouncils`, unionCouncilRoutes);
+app.use(`${api}/villages`, villageRoutes);
 
 // =======================================  Creating Server  =======================================
 
