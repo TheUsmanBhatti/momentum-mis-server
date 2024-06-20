@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 
 const assessmentSchema = mongoose.Schema({
+    partner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Partner',
+    },
+    project: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+    },
     title: {
         type: String,
         required: true

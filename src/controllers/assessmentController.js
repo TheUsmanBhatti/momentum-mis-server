@@ -1,11 +1,11 @@
 // =======================================  Importing Libraries  ================================================
-const { Questionnaire } = require('../models/questionnaire');
+const { Assessment } = require('../models/assessment');
 
 // --------------------------- Get All
 
 const getAll = async (req, res) => {
     try {
-        const result = await Questionnaire.find({ isDeleted: false }).populate('questions', 'text type options');
+        const result = await Assessment.find({ isDeleted: false });
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -21,10 +21,19 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await Questionnaire.findOne({ _id: req?.params?.id, isDeleted: false }).populate('questions', 'text type options');
+        const result = await Assessment.findOne({ _id: req?.params?.id, isDeleted: false })
+            .populate({
+                path: 'questionnaires',
+                select: 'title description questions',
+                populate: {
+                    path: 'questions',
+                    select: 'text type options',
+                }
+            })
+            .populate('users.user', 'firstName lastName email designation')
 
         if (!result) {
-            return res.status(404).json({ success: false, message: 'Questionnaire Not Found' });
+            return res.status(404).json({ success: false, message: 'Assessment Not Found' });
         }
 
         res.status(200).send(result);
@@ -33,19 +42,23 @@ const getById = async (req, res) => {
     }
 };
 
-// --------------------------- Create Questionnaire
+// --------------------------- Create Assessment
 
-const createQuestionnaire = async (req, res) => {
+const createAssessment = async (req, res) => {
     try {
-        let { title, description, questions } = req?.body;
+        let { partner, project, title, description, dueDate, questionnaires, users } = req?.body;
 
-        const check = await Questionnaire.findOne({ title });
-        if (check) return res.status(400).json({ success: false, message: `Already have a Questionnaire ${title}` });
+        const check = await Assessment.findOne({ title });
+        if (check) return res.status(400).json({ success: false, message: `Already have a Assessment ${title}` });
 
-        const insert = new Questionnaire({
+        const insert = new Assessment({
+            partner,
+            project,
             title,
             description,
-            questions,
+            dueDate,
+            questionnaires,
+            users,
             createdBy: req?.auth?.userId
         });
 
@@ -64,16 +77,20 @@ const createQuestionnaire = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, title, description, questions } = req?.body;
-        const check = await Questionnaire.findById(id);
+        const { id, partner, project, title, description, dueDate, questionnaires, users } = req?.body;
+        const check = await Assessment.findById(id);
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Questionnaire.findByIdAndUpdate(
+        const result = await Assessment.findByIdAndUpdate(
             id,
             {
+                partner,
+                project,
                 title,
                 description,
-                questions,
+                dueDate,
+                questionnaires,
+                users,
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },
@@ -90,10 +107,10 @@ const updateData = async (req, res) => {
 
 const deleteData = async (req, res) => {
     try {
-        const check = await Questionnaire.findById(req?.params?.id);
+        const check = await Assessment.findById(req?.params?.id);
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Questionnaire.findByIdAndUpdate(
+        const result = await Assessment.findByIdAndUpdate(
             req?.params?.id,
             {
                 isDeleted: true,
@@ -115,7 +132,7 @@ const deleteData = async (req, res) => {
 module.exports = {
     getAll,
     getById,
-    createQuestionnaire,
+    createAssessment,
     updateData,
     deleteData
 };

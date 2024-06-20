@@ -28,6 +28,7 @@ const centerRoutes = require('./src/routes/centerRoutes');
 const projectRoutes = require('./src/routes/projectRoutes');
 const questionRoutes = require('./src/routes/questionRoutes');
 const questionnaireRoutes = require('./src/routes/questionnaireRoutes');
+const assessmentRoutes = require('./src/routes/assessmentRoutes');
 
 // =======================================  Middleware  ============================================
 
@@ -62,6 +63,7 @@ app.use(`${api}/centers`, centerRoutes);
 app.use(`${api}/projects`, projectRoutes);
 app.use(`${api}/questions`, questionRoutes);
 app.use(`${api}/questionnaires`, questionnaireRoutes);
+app.use(`${api}/assessments`, assessmentRoutes);
 
 // =======================================  Creating Server  =======================================
 
