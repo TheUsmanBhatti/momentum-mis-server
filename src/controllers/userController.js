@@ -25,7 +25,7 @@ const getAllUsers = async (req, res) => {
 
 const getUsersById = async (req, res) => {
     try {
-        const result = await User.findById(req.params.id).select('-passwordHash');
+        const result = await User.findOne({ _id: req.params.id, isDeleted: false }).select('-passwordHash');
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'User Not Found' });

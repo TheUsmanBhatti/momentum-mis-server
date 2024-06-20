@@ -23,7 +23,11 @@ const districtRoutes = require('./src/routes/districtRoutes');
 const tehsilRoutes = require('./src/routes/tehsilRoutes');
 const unionCouncilRoutes = require('./src/routes/unionCouncilRoutes');
 const villageRoutes = require('./src/routes/villageRoutes');
-
+const partnerRoutes = require('./src/routes/partnerRoutes');
+const centerRoutes = require('./src/routes/centerRoutes');
+const projectRoutes = require('./src/routes/projectRoutes');
+const questionRoutes = require('./src/routes/questionRoutes');
+const questionnaireRoutes = require('./src/routes/questionnaireRoutes');
 
 // =======================================  Middleware  ============================================
 
@@ -53,6 +57,11 @@ app.use(`${api}/districts`, districtRoutes);
 app.use(`${api}/tehsils`, tehsilRoutes);
 app.use(`${api}/unionCouncils`, unionCouncilRoutes);
 app.use(`${api}/villages`, villageRoutes);
+app.use(`${api}/partners`, partnerRoutes);
+app.use(`${api}/centers`, centerRoutes);
+app.use(`${api}/projects`, projectRoutes);
+app.use(`${api}/questions`, questionRoutes);
+app.use(`${api}/questionnaires`, questionnaireRoutes);
 
 // =======================================  Creating Server  =======================================
 
