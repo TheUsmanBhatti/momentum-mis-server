@@ -2,6 +2,7 @@
 const incrementStringId = require('../helpers/utils');
 const { Country } = require('../models/country');
 const { State } = require('../models/state');
+const XLSX = require('xlsx');
 
 // --------------------------- Get All
 
@@ -107,10 +108,57 @@ const deleteData = async (req, res) => {
     }
 };
 
+// -------------------------------  Upload Countries
+
+const uploadCountries = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        const insertedStates = [];
+
+        for (const row of data) {
+            const { name } = row;
+
+            if (!name) {
+                continue; // Skip rows with missing data
+            }
+
+            const check = await Country.findOne({ name });
+            if (check) {
+                continue; // Skip already existing states
+            }
+
+            const lastCountry = await Country.findOne().sort({ _id: -1 }).exec();
+            let id = incrementStringId(lastCountry?.countryId);
+
+            const newCountry = new Country({
+                countryId: id ? `C${id}` : 'C001',
+                name
+            });
+
+            const result = await newCountry.save();
+            if (result) {
+                insertedStates.push(result);
+            }
+        }
+
+        return res.status(201).json({ success: true, message: 'Countries uploaded successfully', data: insertedStates });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
+    }
+};
+
 module.exports = {
     getAll,
     getById,
     createCountry,
     updateData,
-    deleteData
+    deleteData,
+    uploadCountries
 };
