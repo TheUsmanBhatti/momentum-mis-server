@@ -119,10 +119,63 @@ const deleteData = async (req, res) => {
     }
 };
 
+// -------------------------------  Upload Cities
+
+const uploadCities = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        const insertedCities = [];
+
+        for (const row of data) {
+            const { name, stateId } = row;
+
+            if (!name || !stateId) {
+                continue; // Skip rows with missing data
+            }
+
+            const check = await City.findOne({ name, stateId });
+            if (check) {
+                continue; // Skip already existing states
+            }
+
+            const checkBind = await State.findOne({ stateId });
+            if (!checkBind) {
+                continue; // Skip if country does not exist
+            }
+
+            const lastCity = await City.findOne().sort({ _id: -1 }).exec();
+            let id = incrementStringId(lastCity?.cityId);
+
+            const newCity = new City({
+                cityId: id ? `J${id}` : 'J001',
+                name,
+                stateId
+            });
+
+            const result = await newCity.save();
+            if (result) {
+                insertedCities.push(result);
+            }
+        }
+
+        return res.status(201).json({ success: true, message: 'Cities uploaded successfully', data: insertedStates });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
+    }
+};
+
 module.exports = {
     getAll,
     getById,
     createCity,
     updateData,
-    deleteData
+    deleteData,
+    uploadCities
 };
