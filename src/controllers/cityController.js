@@ -166,7 +166,7 @@ const uploadCities = async (req, res) => {
             }
         }
 
-        return res.status(201).json({ success: true, message: 'Cities uploaded successfully', data: insertedStates });
+        return res.status(201).json({ success: true, message: 'Cities uploaded successfully', data: insertedCities });
     } catch (err) {
         return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
     }
