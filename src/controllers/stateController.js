@@ -3,6 +3,7 @@ const incrementStringId = require('../helpers/utils');
 const { City } = require('../models/city');
 const { Country } = require('../models/country');
 const { State } = require('../models/state');
+const XLSX = require('xlsx');
 
 // --------------------------- Get All
 
@@ -117,10 +118,63 @@ const deleteData = async (req, res) => {
     }
 };
 
+// -------------------------------  Upload States
+
+const uploadStates = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        const insertedStates = [];
+
+        for (const row of data) {
+            const { name, countryId } = row;
+
+            if (!name || !countryId) {
+                continue; // Skip rows with missing data
+            }
+
+            const check = await State.findOne({ name, countryId });
+            if (check) {
+                continue; // Skip already existing states
+            }
+
+            const checkBind = await Country.findOne({ countryId });
+            if (!checkBind) {
+                continue; // Skip if country does not exist
+            }
+
+            const lastState = await State.findOne().sort({ _id: -1 }).exec();
+            let id = incrementStringId(lastState?.stateId);
+
+            const newState = new State({
+                stateId: id ? `S${id}` : 'S001',
+                name,
+                countryId
+            });
+
+            const result = await newState.save();
+            if (result) {
+                insertedStates.push(result);
+            }
+        }
+
+        return res.status(201).json({ success: true, message: 'States uploaded successfully', data: insertedStates });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
+    }
+};
+
 module.exports = {
     getAll,
     getById,
     createState,
     updateData,
-    deleteData
+    deleteData,
+    uploadStates
 };
