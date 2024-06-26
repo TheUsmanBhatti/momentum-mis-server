@@ -1,5 +1,7 @@
 // =======================================  Importing Libraries  ================================================
+const { Tehsil } = require('../models/tehsil');
 const { UnionCouncil } = require('../models/unionCouncil');
+const { Village } = require('../models/village');
 
 // --------------------------- Get All
 
@@ -21,7 +23,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await UnionCouncil.findById(req.params.id);
+        const result = await UnionCouncil.findOne({ unionCouncilId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'UnionCouncil Not Found' });
@@ -37,14 +39,21 @@ const getById = async (req, res) => {
 
 const createUnionCouncil = async (req, res) => {
     try {
-        let { name, tehsil } = req?.body;
+        let { name, tehsilId } = req?.body;
 
-        const check = await UnionCouncil.findOne({ name });
+        const check = await UnionCouncil.findOne({ name, tehsilId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const checkBind = await Tehsil.findOne({ tehsilId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `Tehsil not existed` });
+
+        const lastUC = await UnionCouncil.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastUC?.unionCouncilId);
+
         const insert = new UnionCouncil({
+            unionCouncilId: id ? `U${id}` : 'U001',
             name,
-            tehsil
+            tehsilId
         });
 
         const result = await insert.save();
@@ -62,15 +71,18 @@ const createUnionCouncil = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, tehsil } = req?.body;
-        const check = await UnionCouncil.findById(id);
+        const { unionCouncilId, name, tehsilId } = req?.body;
+        const check = await UnionCouncil.findOne({ unionCouncilId });
         if (!check) return res.status(400).send('Invalid Id!');
 
+        const checkBind = await Tehsil.findOne({ tehsilId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `Tehsil not existed` });
+
         const result = await UnionCouncil.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name,
-                tehsil
+                tehsilId
             },
             { new: true }
         );
@@ -85,10 +97,15 @@ const updateData = async (req, res) => {
 
 const deleteData = async (req, res) => {
     try {
-        const check = await UnionCouncil.findById(req.params.id);
+        const check = await UnionCouncil.findOne({ unionCouncilId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await UnionCouncil.findByIdAndDelete(req.params.id);
+        const checkBinding = await Village.find({ unionCouncilId: check?.unionCouncilId });
+        if (checkBinding?.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, Villages are binded with this union council' });
+        }
+
+        const result = await UnionCouncil.findByIdAndDelete(check._id);
 
         if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });

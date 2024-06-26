@@ -1,4 +1,5 @@
 // =======================================  Importing Libraries  ================================================
+const { UnionCouncil } = require('../models/unionCouncil');
 const { Village } = require('../models/village');
 
 // --------------------------- Get All
@@ -21,7 +22,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await Village.findById(req.params.id);
+        const result = await Village.findOne({ villageId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'Village Not Found' });
@@ -37,14 +38,21 @@ const getById = async (req, res) => {
 
 const createVillage = async (req, res) => {
     try {
-        let { name, unionCouncil } = req?.body;
+        let { name, unionCouncilId } = req?.body;
 
-        const check = await Village.findOne({ name });
+        const check = await Village.findOne({ name, unionCouncilId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const checkBind = await UnionCouncil.findOne({ tehsilId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `UnionCouncil not existed` });
+
+        const lastUC = await Village.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastUC?.villageId);
+
         const insert = new Village({
+            villageId: id ? `UC${id}` : 'UC001',
             name,
-            unionCouncil
+            unionCouncilId
         });
 
         const result = await insert.save();
@@ -62,15 +70,18 @@ const createVillage = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, unionCouncil } = req?.body;
-        const check = await Village.findById(id);
+        const { villageId, name, unionCouncilId } = req?.body;
+        const check = await Village.findOne({ villageId });
         if (!check) return res.status(400).send('Invalid Id!');
 
+        const checkBind = await UnionCouncil.findOne({ unionCouncilId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `Union Council not existed` });
+
         const result = await Village.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name,
-                unionCouncil
+                unionCouncilId
             },
             { new: true }
         );
@@ -85,10 +96,10 @@ const updateData = async (req, res) => {
 
 const deleteData = async (req, res) => {
     try {
-        const check = await Village.findById(req.params.id);
+        const check = await Village.findOne({ villageId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Village.findByIdAndDelete(req.params.id);
+        const result = await Village.findByIdAndDelete(check._id);
 
         if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });

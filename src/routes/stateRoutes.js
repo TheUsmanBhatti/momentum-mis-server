@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const provinceContoller = require('../controllers/provinceController');
+const stateController = require('../controllers/stateController');
 
-const { getAll, getById, createProvince, updateData, deleteData } = provinceContoller;
+const { getAll, getById, createState, updateData, deleteData } = stateController;
 
 router.get('/', getAll);
 router.get('/:id', getById);
-router.post('/', createProvince);
+router.post('/', createState);
 router.put('/', updateData);
 router.delete('/:id', deleteData);
 

@@ -1,5 +1,7 @@
 // =======================================  Importing Libraries  ================================================
+const { District } = require('../models/district');
 const { Tehsil } = require('../models/tehsil');
+const { UnionCouncil } = require('../models/unionCouncil');
 
 // --------------------------- Get All
 
@@ -21,7 +23,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await Tehsil.findById(req.params.id);
+        const result = await Tehsil.findOne({ tehsilId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'Tehsil Not Found' });
@@ -37,14 +39,21 @@ const getById = async (req, res) => {
 
 const createTehsil = async (req, res) => {
     try {
-        let { name, district } = req?.body;
+        let { name, districtId } = req?.body;
 
-        const check = await Tehsil.findOne({ name });
+        const check = await Tehsil.findOne({ name, districtId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const checkBind = await District.findOne({ districtId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `District not existed` });
+
+        const lastTehsil = await Tehsil.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastTehsil?.tehsilId);
+
         const insert = new Tehsil({
+            tehsilId: id ? `T${id}` : 'T001',
             name,
-            district
+            districtId
         });
 
         const result = await insert.save();
@@ -62,15 +71,18 @@ const createTehsil = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, district } = req?.body;
-        const check = await Tehsil.findById(id);
+        const { districtId, name, tehsilId } = req?.body;
+        const check = await Tehsil.findOne({ tehsilId });
         if (!check) return res.status(400).send('Invalid Id!');
 
+        const checkBind = await District.findOne({ districtId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `District not existed` });
+
         const result = await Tehsil.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name,
-                district
+                districtId
             },
             { new: true }
         );
@@ -85,10 +97,15 @@ const updateData = async (req, res) => {
 
 const deleteData = async (req, res) => {
     try {
-        const check = await Tehsil.findById(req.params.id);
+        const check = await Tehsil.findOne({ tehsilId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Tehsil.findByIdAndDelete(req.params.id);
+        const checkBinding = await UnionCouncil.find({ tehsilId: check?.tehsilId });
+        if (checkBinding?.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, Union Council are binded with this Tehsil' });
+        }
+
+        const result = await Tehsil.findByIdAndDelete(check._id);
 
         if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });

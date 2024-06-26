@@ -1,11 +1,14 @@
 // =======================================  Importing Libraries  ================================================
+const incrementStringId = require('../helpers/utils');
+const { City } = require('../models/city');
 const { District } = require('../models/district');
+const { Tehsil } = require('../models/tehsil');
 
 // --------------------------- Get All
 
 const getAll = async (req, res) => {
     try {
-        const result = await District.find()
+        const result = await District.find();
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -21,7 +24,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await District.findById(req.params.id);
+        const result = await District.findOne({ districtId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'District Not Found' });
@@ -37,14 +40,21 @@ const getById = async (req, res) => {
 
 const createDistrict = async (req, res) => {
     try {
-        let { name, city } = req?.body;
+        let { name, cityId } = req?.body;
 
-        const check = await District.findOne({ name });
+        const check = await District.findOne({ name, cityId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const checkBind = await City.findOne({ cityId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `City not existed` });
+
+        const lastDistrict = await District.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastDistrict?.districtId);
+
         const insert = new District({
+            districtId: id ? `D${id}` : 'D001',
             name,
-            city
+            cityId
         });
 
         const result = await insert.save();
@@ -58,20 +68,22 @@ const createDistrict = async (req, res) => {
     }
 };
 
-
 // ----------------------  Update
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, city } = req?.body;
-        const check = await District.findById(id);
+        const { districtId, name, cityId } = req?.body;
+        const check = await District.findOne({ districtId });
         if (!check) return res.status(400).send('Invalid Id!');
 
+        const checkBind = await City.findOne({ cityId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `City not existed` });
+
         const result = await District.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name,
-                city
+                cityId
             },
             { new: true }
         );
@@ -82,17 +94,21 @@ const updateData = async (req, res) => {
     }
 };
 
-
 // ----------------------- Delete
 
 const deleteData = async (req, res) => {
     try {
-        const check = await District.findById(req.params.id);
+        const check = await District.findOne({ districtId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await District.findByIdAndDelete(req.params.id);
+        const checkBinding = await Tehsil.find({ districtId: check?.districtId });
+        if (checkBinding?.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, Tehsils are binded with this district' });
+        }
 
-        if(result){
+        const result = await District.findByIdAndDelete(check._id);
+
+        if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });
         }
     } catch (err) {
@@ -101,11 +117,10 @@ const deleteData = async (req, res) => {
     }
 };
 
-
 module.exports = {
     getAll,
     getById,
     createDistrict,
     updateData,
-    deleteData,
+    deleteData
 };

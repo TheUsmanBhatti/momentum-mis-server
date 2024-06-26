@@ -1,13 +1,17 @@
 const mongoose = require('mongoose');
 
 const citySchema = mongoose.Schema({
+    cityId: {
+        type: String,
+        required: true,
+        unique: true
+    },
     name: {
         type: String,
         required: true
     },
-    province: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Province',
+    stateId: {
+        type: String,
         required: true
     },
     createdOn: {

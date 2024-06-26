@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-const villageSchema = mongoose.Schema({
-    villageId: {
+const stateSchema = mongoose.Schema({
+    stateId: {
         type: String,
         required: true,
         unique: true
@@ -10,7 +10,7 @@ const villageSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    unionCouncilId: {
+    countryId: {
         type: String,
         required: true
     },
@@ -20,12 +20,12 @@ const villageSchema = mongoose.Schema({
     }
 });
 
-villageSchema.virtual('id').get(function () {
+stateSchema.virtual('id').get(function () {
     return this._id.toHexString();
 });
 
-villageSchema.set('toJSON', {
+stateSchema.set('toJSON', {
     virtuals: true
 });
 
-exports.Village = mongoose.model('Village', villageSchema);
+exports.State = mongoose.model('State', stateSchema);

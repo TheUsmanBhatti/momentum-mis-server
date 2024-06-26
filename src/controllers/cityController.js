@@ -1,11 +1,14 @@
 // =======================================  Importing Libraries  ================================================
+const incrementStringId = require('../helpers/utils');
 const { City } = require('../models/city');
+const { District } = require('../models/district');
+const { State } = require('../models/state');
 
 // --------------------------- Get All
 
 const getAll = async (req, res) => {
     try {
-        const result = await City.find()
+        const result = await City.find();
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -21,7 +24,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await City.findById(req.params.id);
+        const result = await City.findOne({ cityId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'City Not Found' });
@@ -37,14 +40,21 @@ const getById = async (req, res) => {
 
 const createCity = async (req, res) => {
     try {
-        let { name, province } = req?.body;
+        let { name, stateId } = req?.body;
 
-        const check = await City.findOne({ name });
+        const check = await City.findOne({ name, stateId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const checkBind = await State.findOne({ stateId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `State not existed` });
+
+        const lastCity = await City.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastCity?.cityId);
+
         const insert = new City({
+            cityId: id ? `J${id}` : 'J001',
             name,
-            province
+            stateId
         });
 
         const result = await insert.save();
@@ -58,20 +68,22 @@ const createCity = async (req, res) => {
     }
 };
 
-
 // ----------------------  Update
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, province } = req?.body;
-        const check = await City.findById(id);
+        const { stateId, name, cityId } = req?.body;
+        const check = await City.findOne({ cityId });
         if (!check) return res.status(400).send('Invalid Id!');
 
+        const checkBind = await State.findOne({ stateId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `State not existed` });
+
         const result = await City.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name,
-                province
+                stateId
             },
             { new: true }
         );
@@ -82,17 +94,23 @@ const updateData = async (req, res) => {
     }
 };
 
-
 // ----------------------- Delete
 
 const deleteData = async (req, res) => {
     try {
-        const check = await City.findById(req.params.id);
+        const check = await City.findOne({ cityId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await City.findByIdAndDelete(req.params.id);
+        
+        const checkBinding = await District.find({ cityId: check?.cityId });
 
-        if(result){
+        if (checkBinding?.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, Districts are binded with this city' });
+        }
+
+        const result = await City.findByIdAndDelete(check?._id);
+
+        if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });
         }
     } catch (err) {
@@ -101,11 +119,10 @@ const deleteData = async (req, res) => {
     }
 };
 
-
 module.exports = {
     getAll,
     getById,
     createCity,
     updateData,
-    deleteData,
+    deleteData
 };

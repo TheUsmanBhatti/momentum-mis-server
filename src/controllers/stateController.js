@@ -1,11 +1,14 @@
 // =======================================  Importing Libraries  ================================================
-const { Province } = require('../models/province');
+const incrementStringId = require('../helpers/utils');
+const { City } = require('../models/city');
+const { Country } = require('../models/country');
+const { State } = require('../models/state');
 
 // --------------------------- Get All
 
 const getAll = async (req, res) => {
     try {
-        const result = await Province.find()
+        const result = await State.find();
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -21,10 +24,10 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await Province.findById(req.params.id);
+        const result = await State.findOne({ stateId: req.params.id });
 
         if (!result) {
-            return res.status(404).json({ success: false, message: 'Province Not Found' });
+            return res.status(404).json({ success: false, message: 'State Not Found' });
         }
 
         res.status(200).send(result);
@@ -33,18 +36,25 @@ const getById = async (req, res) => {
     }
 };
 
-// --------------------------- Create Province
+// --------------------------- Create State
 
-const createProvince = async (req, res) => {
+const createState = async (req, res) => {
     try {
-        let { name, country } = req?.body;
+        let { name, countryId } = req?.body;
 
-        const check = await Province.findOne({ name });
+        const check = await State.findOne({ name, countryId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
-        const insert = new Province({
+        const checkBind = await Country.findOne({ countryId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `Country not existed` });
+
+        const lastState = await State.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastState?.stateId);
+
+        const insert = new State({
+            stateId: id ? `S${id}` : 'S001',
             name,
-            country
+            countryId
         });
 
         const result = await insert.save();
@@ -58,20 +68,22 @@ const createProvince = async (req, res) => {
     }
 };
 
-
 // ----------------------  Update
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, country } = req?.body;
-        const check = await Province.findById(id);
+        const { stateId, name, countryId } = req?.body;
+        const check = await State.findOne({ stateId });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Province.findByIdAndUpdate(
-            id,
+        const checkBind = await Country.findOne({ countryId });
+        if (!checkBind) return res.status(400).json({ success: false, message: `Country not existed` });
+
+        const result = await State.findByIdAndUpdate(
+            check?._id,
             {
                 name,
-                country
+                countryId
             },
             { new: true }
         );
@@ -82,17 +94,21 @@ const updateData = async (req, res) => {
     }
 };
 
-
 // ----------------------- Delete
 
 const deleteData = async (req, res) => {
     try {
-        const check = await Province.findById(req.params.id);
+        const check = await State.findOne({ stateId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Province.findByIdAndDelete(req.params.id);
+        const checkBinding = await City.find({ stateId: check?.stateId });
+        if (checkBinding?.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, Cities are binded with this state' });
+        }
 
-        if(result){
+        const result = await State.findByIdAndDelete(check?._id);
+
+        if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });
         }
     } catch (err) {
@@ -101,11 +117,10 @@ const deleteData = async (req, res) => {
     }
 };
 
-
 module.exports = {
     getAll,
     getById,
-    createProvince,
+    createState,
     updateData,
-    deleteData,
+    deleteData
 };

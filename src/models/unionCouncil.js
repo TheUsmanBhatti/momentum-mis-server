@@ -1,13 +1,17 @@
 const mongoose = require('mongoose');
 
 const unionCouncilSchema = mongoose.Schema({
+    unionCouncilId: {
+        type: String,
+        required: true,
+        unique: true
+    },
     name: {
         type: String,
         required: true
     },
-    tehsil: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tehsil',
+    tehsilId: {
+        type: String,
         required: true
     },
     createdOn: {

@@ -17,7 +17,7 @@ const api = process.env.API_URL;
 
 const userRoutes = require('./src/routes/userRoutes');
 const countryRoutes = require('./src/routes/countryRoutes');
-const provinceRoutes = require('./src/routes/provinceRoutes');
+const stateRoutes = require('./src/routes/stateRoutes');
 const cityRoutes = require('./src/routes/cityRoutes');
 const districtRoutes = require('./src/routes/districtRoutes');
 const tehsilRoutes = require('./src/routes/tehsilRoutes');
@@ -52,7 +52,7 @@ mongoose
 
 app.use(`${api}/users`, userRoutes);
 app.use(`${api}/countries`, countryRoutes);
-app.use(`${api}/provinces`, provinceRoutes);
+app.use(`${api}/states`, stateRoutes);
 app.use(`${api}/cities`, cityRoutes);
 app.use(`${api}/districts`, districtRoutes);
 app.use(`${api}/tehsils`, tehsilRoutes);

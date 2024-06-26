@@ -1,11 +1,13 @@
 // =======================================  Importing Libraries  ================================================
+const incrementStringId = require('../helpers/utils');
 const { Country } = require('../models/country');
+const { State } = require('../models/state');
 
 // --------------------------- Get All
 
 const getAll = async (req, res) => {
     try {
-        const result = await Country.find()
+        const result = await Country.find();
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
@@ -21,7 +23,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
     try {
-        const result = await Country.findById(req.params.id);
+        const result = await Country.findOne({ countryId: req.params.id });
 
         if (!result) {
             return res.status(404).json({ success: false, message: 'Country Not Found' });
@@ -42,8 +44,12 @@ const createCountry = async (req, res) => {
         const check = await Country.findOne({ name });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
+        const lastCountry = await Country.findOne().sort({ _id: -1 }).exec();
+        let id = incrementStringId(lastCountry?.countryId);
+
         const insert = new Country({
-            name
+            name,
+            countryId: id ? `C${id}` : 'C001'
         });
 
         const result = await insert.save();
@@ -57,17 +63,16 @@ const createCountry = async (req, res) => {
     }
 };
 
-
 // ----------------------  Update
 
 const updateData = async (req, res) => {
     try {
-        const { id, name } = req?.body;
-        const check = await Country.findById(id);
+        const { countryId, name } = req?.body;
+        const check = await Country.findOne({ countryId });
         if (!check) return res.status(400).send('Invalid Id!');
 
         const result = await Country.findByIdAndUpdate(
-            id,
+            check?._id,
             {
                 name
             },
@@ -80,17 +85,20 @@ const updateData = async (req, res) => {
     }
 };
 
-
 // ----------------------- Delete
 
 const deleteData = async (req, res) => {
     try {
-        const check = await Country.findById(req.params.id);
+        const check = await Country.findOne({ countryId: req.params.id });
         if (!check) return res.status(400).send('Invalid Id!');
 
-        const result = await Country.findByIdAndDelete(req.params.id);
+        const checkCountryStates = await State.find({ countryId: check?.countryId });
+        if (checkCountryStates) {
+            return res.status(400).json({ success: false, message: 'Cannot Deleted, States are binded with this country' });
+        }
 
-        if(result){
+        const result = await Country.findByIdAndDelete(check?._id);
+        if (result) {
             res.status(200).json({ success: true, message: 'Deleted' });
         }
     } catch (err) {
@@ -99,11 +107,10 @@ const deleteData = async (req, res) => {
     }
 };
 
-
 module.exports = {
     getAll,
     getById,
     createCountry,
     updateData,
-    deleteData,
+    deleteData
 };
