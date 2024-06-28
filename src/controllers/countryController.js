@@ -8,12 +8,13 @@ const XLSX = require('xlsx');
 
 const getAll = async (req, res) => {
     try {
-        const result = await Country.find().toArray();;
+        const result = await Country.find();
 
         if (!result || result?.length == 0) {
             return res.status(404).json({ success: false, message: 'Record not Found' });
         }
 
+        console.log();
         const modifiedArr = result?.map((item) => {
             const obj = item.toObject();
             return {
@@ -22,7 +23,7 @@ const getAll = async (req, res) => {
             };
         });
 
-        res.status(200).send(modifiedArr);
+        res.status(200).json(modifiedArr);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Something went wrong!', error: err });
     }
