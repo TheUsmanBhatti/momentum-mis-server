@@ -15,7 +15,12 @@ const getAll = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Record not Found' });
         }
 
-        res.status(200).send(result);
+        const modifiedArr = result?.map((item) => ({
+            ...item,
+            value: item?.stateId
+        }));
+
+        res.status(200).send(modifiedArr);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Something went wrong!', error: err });
     }

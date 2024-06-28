@@ -37,7 +37,7 @@ const getById = async (req, res) => {
 
 const createQuestionnaire = async (req, res) => {
     try {
-        let { title, description, questions } = req?.body;
+        let { title, description, questions, isActive } = req?.body;
 
         const check = await Questionnaire.findOne({ title });
         if (check) return res.status(400).json({ success: false, message: `Already have a Questionnaire ${title}` });
@@ -46,6 +46,7 @@ const createQuestionnaire = async (req, res) => {
             title,
             description,
             questions,
+            isActive,
             createdBy: req?.auth?.userId
         });
 
@@ -64,7 +65,7 @@ const createQuestionnaire = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, title, description, questions } = req?.body;
+        const { id, title, description, questions, isActive } = req?.body;
         const check = await Questionnaire.findById(id);
         if (!check) return res.status(400).send('Invalid Id!');
 
@@ -74,6 +75,7 @@ const updateData = async (req, res) => {
                 title,
                 description,
                 questions,
+                isActive,
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },

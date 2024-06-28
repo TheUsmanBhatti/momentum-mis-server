@@ -37,7 +37,7 @@ const getById = async (req, res) => {
 
 const createCenter = async (req, res) => {
     try {
-        let { name, village, unionCouncil, tehsil, district } = req?.body;
+        let { name, village, country, address, contactNo } = req?.body;
 
         const check = await Center.findOne({ name });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
@@ -47,9 +47,9 @@ const createCenter = async (req, res) => {
         const insert = new Center({
             name,
             village,
-            unionCouncil,
-            tehsil,
-            district,
+            country,
+            address,
+            contactNo,
             serialNo: lastCenter?.serialNo + 1 || 0,
             createdBy: req?.auth?.userId
         });
@@ -69,7 +69,7 @@ const createCenter = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, village, unionCouncil, tehsil, district } = req?.body;
+        const { id, name, village, country, address, contactNo } = req?.body;
         const check = await Center.findById(id);
         if (!check) return res.status(400).send('Invalid Id!');
 
@@ -78,9 +78,9 @@ const updateData = async (req, res) => {
             {
                 name,
                 village,
-                unionCouncil,
-                tehsil,
-                district,
+                country,
+                address,
+                contactNo,
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },

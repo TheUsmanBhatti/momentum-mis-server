@@ -8,24 +8,22 @@ const centerSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    address: {
+        type: String,
+        required: true
+    },
+    contactNo: {
+        type: String,
+        required: true
+    },
     village: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Village',
         required: true
     },
-    unionCouncil: {
+    country: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'UnionCouncil',
-        required: true
-    },
-    tehsil: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tehsil',
-        required: true
-    },
-    district: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'District',
+        ref: 'Country',
         required: true
     },
     isDeleted: {

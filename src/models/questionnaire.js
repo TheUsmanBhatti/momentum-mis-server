@@ -14,6 +14,10 @@ const questionnaireSchema = mongoose.Schema({
             ref: 'Question'
         }
     ],
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     isDeleted: {
         type: Boolean,
         default: false
