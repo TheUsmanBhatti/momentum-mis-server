@@ -52,7 +52,7 @@ const createVillage = async (req, res) => {
         const check = await Village.findOne({ name, unionCouncilId });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
 
-        const checkBind = await UnionCouncil.findOne({ tehsilId });
+        const checkBind = await UnionCouncil.findOne({ unionCouncilId });
         if (!checkBind) return res.status(400).json({ success: false, message: `UnionCouncil not existed` });
 
         const lastUC = await Village.findOne().sort({ _id: -1 }).exec();
