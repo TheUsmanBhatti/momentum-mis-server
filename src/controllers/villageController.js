@@ -2,6 +2,7 @@
 const incrementStringId = require('../helpers/utils');
 const { UnionCouncil } = require('../models/unionCouncil');
 const { Village } = require('../models/village');
+const XLSX = require('xlsx');
 
 // --------------------------- Get All
 
@@ -59,7 +60,7 @@ const createVillage = async (req, res) => {
         let id = incrementStringId(lastUC?.villageId);
 
         const insert = new Village({
-            villageId: id ? `UC${id}` : 'UC001',
+            villageId: id ? `V${id}` : 'V001',
             name,
             unionCouncilId
         });
@@ -119,10 +120,61 @@ const deleteData = async (req, res) => {
     }
 };
 
+const uploadVillages = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        const insertedVillages = [];
+
+        for (const row of data) {
+            const { name, unionCouncilId } = row;
+
+            if (!name || !unionCouncilId) {
+                continue; // Skip rows with missing data
+            }
+
+            const check = await Village.findOne({ name, unionCouncilId });
+            if (check) {
+                continue; // Skip already existing states
+            }
+
+            const checkBind = await UnionCouncil.findOne({ unionCouncilId });
+            if (!checkBind) {
+                continue; // Skip if country does not exist
+            }
+
+            const lastVillage = await Village.findOne().sort({ _id: -1 }).exec();
+            let id = incrementStringId(lastVillage?.villageId);
+
+            const newVillage = new Village({
+                villageId: id ? `V${id}` : 'V001',
+                name,
+                unionCouncilId
+            });
+
+            const result = await newVillage.save();
+            if (result) {
+                insertedVillages.push(result);
+            }
+        }
+
+        return res.status(201).json({ success: true, message: 'Villages uploaded successfully', data: insertedVillages });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
+    }
+};
+
 module.exports = {
     getAll,
     getById,
     createVillage,
     updateData,
-    deleteData
+    deleteData,
+    uploadVillages
 };

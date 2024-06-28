@@ -3,6 +3,7 @@ const incrementStringId = require('../helpers/utils');
 const { District } = require('../models/district');
 const { Tehsil } = require('../models/tehsil');
 const { UnionCouncil } = require('../models/unionCouncil');
+const XLSX = require('xlsx');
 
 // --------------------------- Get All
 
@@ -125,10 +126,63 @@ const deleteData = async (req, res) => {
     }
 };
 
+// -------------------------------  Upload Tehsil
+
+const uploadTehsils = async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+
+        const insertedTehsils = [];
+
+        for (const row of data) {
+            const { name, districtId } = row;
+
+            if (!name || !districtId) {
+                continue; // Skip rows with missing data
+            }
+
+            const check = await Tehsil.findOne({ name, districtId });
+            if (check) {
+                continue; // Skip already existing states
+            }
+
+            const checkBind = await District.findOne({ districtId });
+            if (!checkBind) {
+                continue; // Skip if country does not exist
+            }
+
+            const lastTehsil = await Tehsil.findOne().sort({ _id: -1 }).exec();
+            let id = incrementStringId(lastTehsil?.tehsilId);
+
+            const newTehsil = new Tehsil({
+                tehsilId: id ? `T${id}` : 'T001',
+                name,
+                districtId
+            });
+
+            const result = await newTehsil.save();
+            if (result) {
+                insertedTehsils.push(result);
+            }
+        }
+
+        return res.status(201).json({ success: true, message: 'Tehsils uploaded successfully', data: insertedTehsils });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err?.message || err });
+    }
+};
+
 module.exports = {
     getAll,
     getById,
     createTehsil,
     updateData,
-    deleteData
+    deleteData,
+    uploadTehsils
 };

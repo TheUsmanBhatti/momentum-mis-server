@@ -37,7 +37,7 @@ const getById = async (req, res) => {
 
 const createProject = async (req, res) => {
     try {
-        let { name, partner, startDate, endDate, location, centers } = req?.body;
+        let { name, partner, startDate, endDate, location, centers, status } = req?.body;
 
         const check = await Project.findOne({ name });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
@@ -51,6 +51,7 @@ const createProject = async (req, res) => {
             endDate,
             location,
             centers,
+            status,
             serialNo: lastProject?.serialNo + 1 || 0,
             createdBy: req?.auth?.userId
         });
@@ -70,7 +71,7 @@ const createProject = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, partner, startDate, endDate, location, centers } = req?.body;
+        const { id, name, partner, startDate, endDate, location, centers, status, isActive } = req?.body;
         const check = await Project.findById(id);
         if (!check) return res.status(400).send('Invalid Id!');
 
@@ -83,6 +84,8 @@ const updateData = async (req, res) => {
                 endDate,
                 location,
                 centers,
+                status,
+                isActive,
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },

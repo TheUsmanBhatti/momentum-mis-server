@@ -29,6 +29,7 @@ const projectRoutes = require('./src/routes/projectRoutes');
 const questionRoutes = require('./src/routes/questionRoutes');
 const questionnaireRoutes = require('./src/routes/questionnaireRoutes');
 const assessmentRoutes = require('./src/routes/assessmentRoutes');
+const answerRoutes = require('./src/routes/answerRoutes');
 
 // =======================================  Middleware  ============================================
 
@@ -64,6 +65,7 @@ app.use(`${api}/projects`, projectRoutes);
 app.use(`${api}/questions`, questionRoutes);
 app.use(`${api}/questionnaires`, questionnaireRoutes);
 app.use(`${api}/assessments`, assessmentRoutes);
+app.use(`${api}/answers`, answerRoutes);
 
 // =======================================  Creating Server  =======================================
 

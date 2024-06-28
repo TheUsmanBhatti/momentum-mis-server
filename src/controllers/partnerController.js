@@ -1,5 +1,6 @@
 // =======================================  Importing Libraries  ================================================
 const { Partner } = require('../models/partner');
+const { Project } = require('../models/project');
 
 // --------------------------- Get All
 
@@ -37,7 +38,7 @@ const getById = async (req, res) => {
 
 const createPartner = async (req, res) => {
     try {
-        let { name, address, industry, type } = req?.body;
+        let { name, address, industry, type, isActive } = req?.body;
 
         const check = await Partner.findOne({ name });
         if (check) return res.status(400).json({ success: false, message: `Already have a field ${name}` });
@@ -49,6 +50,7 @@ const createPartner = async (req, res) => {
             address,
             industry,
             type,
+            isActive,
             serialNo: lastPartner?.serialNo + 1 || 0,
             createdBy: req?.auth?.userId
         });
@@ -68,7 +70,7 @@ const createPartner = async (req, res) => {
 
 const updateData = async (req, res) => {
     try {
-        const { id, name, address, industry, type } = req?.body;
+        const { id, name, address, industry, type, isActive } = req?.body;
         const check = await Partner.findById(id);
         if (!check) return res.status(400).send('Invalid Id!');
 
@@ -79,6 +81,7 @@ const updateData = async (req, res) => {
                 address,
                 industry,
                 type,
+                isActive,
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
             },
@@ -97,6 +100,9 @@ const deleteData = async (req, res) => {
     try {
         const check = await Partner.findById(req?.params?.id);
         if (!check) return res.status(400).send('Invalid Id!');
+
+        const checkProjects = await Project.find({partner: req?.params?.id})
+        if(checkProjects?.length > 0) return res.status(400).send(`Cannot Delete. There are ${checkProjects?.length} linked with this partner`);
 
         const result = await Partner.findByIdAndUpdate(
             req?.params?.id,

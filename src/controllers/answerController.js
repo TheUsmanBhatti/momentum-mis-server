@@ -5,19 +5,64 @@ const { User } = require('../models/user');
 
 // --------------------------- Get All
 
-// const getAll = async (req, res) => {
-//     try {
-//         const result = await Assessment.find({ isDeleted: false });
+const getAssessmentAnswer = async (req, res) => {
+    try {
+        const { assessmentId, userId } = req.params;
 
-//         if (!result || result?.length == 0) {
-//             return res.status(404).json({ success: false, message: 'Record not Found' });
-//         }
+        // Check if the assessment exists
+        const assessment = await Assessment.findById(assessmentId).populate('createdBy', 'firstName lastName').populate('questionnaires');
+        if (!assessment) {
+            return res.status(404).json({ success: false, message: 'Assessment not found' });
+        }
 
-//         res.status(200).send(result);
-//     } catch (err) {
-//         res.status(500).json({ success: false, message: 'Something went wrong!', error: err });
-//     }
-// };
+        // Check if the user is part of the assessment
+        const userInAssessment = assessment.users.find((user) => user.user.toString() === userId);
+        if (!userInAssessment) {
+            return res.status(404).json({ success: false, message: 'User not part of this assessment' });
+        }
+
+        // Find answers for the given user and assessment
+        const answers = await Answer.find({ assessment: assessmentId, user: userId })
+            .populate('questionnaire', 'title description')
+            .populate('question', 'text type options')
+            .select('answer questionnaire question');
+
+        // Format the response
+        const formattedResponse = {
+            success: true,
+            filledBy: userInAssessment.user?.firstName, // Assuming you want the user status here
+            submittedAt: new Date(), // You can replace this with the actual submission date if available
+            status: userInAssessment.status,
+            assessment: {
+                id: assessment.id,
+                title: assessment.title,
+                description: assessment.description,
+                createdBy: assessment.createdBy ? `${assessment.createdBy.firstName} ${assessment.createdBy.lastName}` : null,
+                createdOn: assessment.createdOn,
+                dueDate: assessment.dueDate,
+                questionnaires: assessment.questionnaires.map((questionnaire) => ({
+                    id: questionnaire._id,
+                    title: questionnaire.title,
+                    description: questionnaire.description,
+                    questions: answers
+                        .filter(answer => answer.questionnaire._id.toString() === questionnaire._id.toString())
+                        .map(answer => ({
+                            questionId: answer.question._id,
+                            question: answer.question.text,
+                            type: answer.question.type,
+                            options: answer.question.options,
+                            answerId: answer._id,
+                            answer: answer.answer
+                        }))
+                }))
+            }
+        };
+
+        return res.status(200).json(formattedResponse);
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong!', error: err.message || err });
+    }
+};
 
 // --------------------------- Get All by Id
 
@@ -48,8 +93,7 @@ const { User } = require('../models/user');
 
 const createAnswer = async (req, res) => {
     try {
-        const { userId, assessmentId, answers } = req.body;
-
+        const { userId, assessmentId, answers } = req.body;;
         // Check if the assessment exists
         const assessment = await Assessment.findById(assessmentId);
         if (!assessment) {
@@ -151,7 +195,8 @@ const createAnswer = async (req, res) => {
 module.exports = {
     // getAll,
     // getById,
-    createAnswer
+    createAnswer,
+    getAssessmentAnswer
     // updateData,
     // deleteData
 };

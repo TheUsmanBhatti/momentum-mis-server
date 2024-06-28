@@ -26,6 +26,15 @@ const projectSchema = mongoose.Schema({
         default: ''
     },
     centers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Center' }],
+    status: {
+        type: String,
+        enum: ['draft', 'in_progress', 'completed'],
+        default: 'draft'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     isDeleted: {
         type: Boolean,
         default: false
