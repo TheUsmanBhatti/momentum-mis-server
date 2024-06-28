@@ -14,10 +14,13 @@ const getAll = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Record not Found' });
         }
 
-        const modifiedArr = result?.map((item) => ({
-            ...item,
-            value: item?.tehsilId
-        }));
+        const modifiedArr = result?.map((item) => {
+            const obj = item.toObject();
+            return {
+                ...obj,
+                value: item?.tehsilId
+            };
+        });
 
         res.status(200).send(modifiedArr);
     } catch (err) {
