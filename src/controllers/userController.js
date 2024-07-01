@@ -135,7 +135,7 @@ const signinUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const { userId, firstName, lastName, email, qualification, designation, phoneNo, address } = req?.body;
+        const { userId, firstName, lastName, email, qualification, designation, phoneNo, address, isActive } = req?.body;
         const user = await User.findById(userId);
         if (!user) return res.status(400).send('Invalid User!');
 
@@ -151,6 +151,7 @@ const updateUser = async (req, res) => {
                 designation,
                 phoneNo,
                 address,
+                isActive,
                 ...(fileName && { avatar: fileName }),
                 updatedBy: req?.auth?.userId,
                 updatedOn: new Date()
